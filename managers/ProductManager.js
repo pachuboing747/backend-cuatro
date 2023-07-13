@@ -7,11 +7,10 @@ const __dirname = path.dirname(__filename)
 
 
 class ProductManager {
-  #products = []
 
   constructor(filename) {
     this.filename = filename;
-    this.filePath = path.join(__dirname, this.filename)
+    this.filePath = path.join(__dirname, "../data", this.filename)
   }
 
   async addProduct(prod) {
