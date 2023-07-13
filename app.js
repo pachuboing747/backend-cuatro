@@ -1,6 +1,9 @@
 import express from "express"
+import path from "path";
 import fs from "fs/promises";
 import routes from './routes/index.js';
+
+
 
 const app = express();
 app.use(express.urlencoded({ extended: true }));
@@ -106,7 +109,7 @@ app.post('/:cid/product/:pid', async (req, res) => {
     }
 
     data = JSON.stringify(cartList, null, 2);
-    await fs.writeFile('products.json','utf-8');
+    await fs.writeFile('products.json', data, 'utf-8');
 
     res.json(cartList);
   } catch (error) {
