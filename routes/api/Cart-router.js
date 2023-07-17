@@ -1,11 +1,11 @@
 import { Router} from "express";
+import { promises as fs } from "fs";
 import CartsManager from "../../managers/CartsManager.js"
-
 
 const cartManager = new CartsManager("cart.json")
 const router = Router()
 
-
+// /api/carts
 router.get("/", async (req, res) => {
   const limit = parseInt(req.query.limit);
   let productsToSend = await cartManager.getProducts();
@@ -35,22 +35,12 @@ router.get("/", async (req, res) => {
     ${productHTML}
   `);
 });
-
-router.get('/api/carts', async (req, res) => {
-    try {
-      const data = await fs.readFile('cart.json', 'utf8');
-      const cartData = JSON.parse(data);
   
-      res.status(200).json(cartData);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Error al obtener los datos del carrito.' });
-    }
-});
-     
-router.post('/api/carts', async (req, res) => {
+
+// /api/carts
+router.post("/", async (req, res) => {
     try {
-      const cartData = await fs.readFile('cart.json', 'utf8');
+      const cartData = await fs.readFile("./data/cart.json", "utf8");
       let cart = JSON.parse(cartData);
   
       if (!Array.isArray(cart)) {
@@ -77,8 +67,9 @@ router.post('/api/carts', async (req, res) => {
       };
   
       cart.push(productToAdd);
-  
-      await fs.writeFile('cart.json', JSON.stringify(cart, null, 2), 'utf8');
+
+      await fs.writeFile("./data/cart.json", JSON.stringify(cart, null, 2), 'utf8');
+
   
       res.status(201).json({ message: 'Producto agregado al carrito correctamente.', product: productToAdd });
     } catch (err) {
@@ -87,26 +78,28 @@ router.post('/api/carts', async (req, res) => {
     }
 });
   
-  
-router.get('/api/carts/:cid', async (req, res) => {
-    try {
-      const cartId = parseInt(req.params.cid);
-  
-      const cartData = await fs.readFile('cart.json', 'utf8');
-      const cart = JSON.parse(cartData);
-  
-      const targetCart = cart[cartId];
-  
-      if (!targetCart) {
-        res.status(404).json({ message: 'Carrito no encontrado.' });
-        return;
-      }
-  
-      res.status(200).json({ cart: targetCart });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Error al obtener los productos del carrito.' });
+// /api/carts/:cid
+router.get('/:cid', async (req, res) => {
+  try {
+    const cartId = parseInt(req.params.cid);
+
+    const cartData = await fs.readFile("./data/cart.json", "utf8");
+
+    const cart = JSON.parse(cartData);
+
+    const targetCart = cart.find(item => item.id === cartId);
+
+    if (!targetCart) {
+      res.status(404).json({ message: 'Carrito no encontrado.' });
+      return;
     }
+
+    res.status(200).json({ cart: targetCart });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error al obtener los productos del carrito.' });
+  }
 });
+
 
 export default  router;
