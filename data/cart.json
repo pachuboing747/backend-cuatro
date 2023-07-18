@@ -42,5 +42,27 @@
     "stock": 15,
     "category": "Zapatillas",
     "status": true
+  },
+  {
+    "id": 5,
+    "title": "Nike Zoom Mercurial Superfly 9 Academy MG",
+    "description": "Cuenta con una unidad Zoom Air y con una NikeSkin flexible en la parte superior para brindar un toque excepcional, de modo que puedas dominar en los últimos y más importantes minutos de un partido.",
+    "price": 49900,
+    "thumbnail": "https://nikearprod.vtexassets.com/arquivos/ids/452821/DJ5625_001_A_PREM.jpg?v=638149287879500000",
+    "code": "GW1022",
+    "stock": 15,
+    "category": "Zapatillas",
+    "status": true
+  },
+  {
+    "id": 6,
+    "title": "Nike Zoom Mercurial Superfly 9 Academy MG",
+    "description": "Cuenta con una unidad Zoom Air y con una NikeSkin flexible en la parte superior para brindar un toque excepcional, de modo que puedas dominar en los últimos y más importantes minutos de un partido.",
+    "price": 49900,
+    "thumbnail": "https://nikearprod.vtexassets.com/arquivos/ids/452821/DJ5625_001_A_PREM.jpg?v=638149287879500000",
+    "code": "GW1022",
+    "stock": 15,
+    "category": "Zapatillas",
+    "status": true
   }
 ]

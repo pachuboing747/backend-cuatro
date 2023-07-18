@@ -110,39 +110,4 @@ class CartsManager {
 const manager = new CartsManager(path.join(__dirname, "cart.json"));
 
 
-async function test() {
-  try {
-    await manager.addProduct({
-      title: "Nike Zoom Mercurial Superfly 9 Academy MG",
-      description: "Cuenta con una unidad Zoom Air y con una NikeSkin flexible en la parte superior para brindar un toque excepcional, de modo que puedas dominar en los últimos y más importantes minutos de un partido.",
-      price: 49900,
-      thumbnail: "https://nikearprod.vtexassets.com/arquivos/ids/452821/DJ5625_001_A_PREM.jpg?v=638149287879500000",
-      code: "GW1022",
-      stock: 15,
-    });
-
-    const products = await manager.getProducts();
-    console.log(products);
-
-    const updated = await manager.updateProduct(1, {
-      title: "Nuevo nombre",
-      price: 29900,
-    });
-
-    if (updated) {
-      console.log("Producto actualizado exitosamente.");
-    } else {
-      console.log("Producto no encontrado.");
-    }
-
-    const product = await manager.getProductById(1);
-    console.log(product);
-
-    await manager.deleteProduct(5);
-    console.log("Producto eliminado exitosamente");
-  } catch (error) {
-    console.error(error.message);
-  }
-}
-
 export default CartsManager

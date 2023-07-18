@@ -144,5 +144,5 @@ async function test() {
     console.error(error.message);
   }
 }
-
+// test()
 export default ProductManager
