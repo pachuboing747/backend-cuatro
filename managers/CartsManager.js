@@ -98,9 +98,8 @@ class CartsManager {
 
 
   return existingProduct;
-}
+  }
 
-// ... (código posterior)
 
 
   async getAll() {
