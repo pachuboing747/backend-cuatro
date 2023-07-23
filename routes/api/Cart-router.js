@@ -1,89 +1,83 @@
 import { Router } from "express";
-import { promises as fs } from "fs";
 import CartsManager from "../../managers/CartsManager.js";
+import ProductManager from "../../managers/ProductManager.js";
 
 const cartManager = new CartsManager("cart.json");
+const productManager = new ProductManager("productos.json");
 const router = Router();
 
-// /api/carts
-router.get("/", async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit);
-    let productsToSend = await cartManager.getProducts();
-
-    if (!isNaN(limit) && limit > 0) {
-      productsToSend = productsToSend.slice(0, limit);
-    }
-
-    res.status(200).json(productsToSend);
-  } catch (error) {
-    res.status(500).json({ error: "Error al obtener los productos del carrito" });
-  }
-});
-
-// /api/carts
-router.post("/", async (req, res) => {
-  try {
-    const cartData = await fs.readFile("./data/cart.json", "utf8");
-    let cart = JSON.parse(cartData);
-
-    if (!Array.isArray(cart)) {
-      cart = [];
-    }
-
-    const newItemId = cart.length > 0 ? cart[cart.length - 1].id + 1 : 1;
-
-    const isDuplicate = cart.some((item) => item.id === newItemId);
-    if (isDuplicate) {
-      throw new Error("El producto ya existe.");
-    }
-
-    const productToAdd = {
-      id: newItemId,
-      title: "Nike Zoom Mercurial Superfly 9 Academy MG",
-      description:
-        "Cuenta con una unidad Zoom Air y con una NikeSkin flexible en la parte superior para brindar un toque excepcional, de modo que puedas dominar en los últimos y más importantes minutos de un partido.",
-      price: 49900,
-      thumbnail:
-        "https://nikearprod.vtexassets.com/arquivos/ids/452821/DJ5625_001_A_PREM.jpg?v=638149287879500000",
-      code: "GW1022",
-      stock: 15,
-      category: "Zapatillas",
-      status: true,
-    };
-
-    cart.push(productToAdd);
-
-    await fs.writeFile("./data/cart.json", JSON.stringify(cart, null, 2), "utf8");
-
-    res
-      .status(201)
-      .json({ message: "Producto agregado al carrito correctamente", product: productToAdd });
-  } catch (error) {
-    res.status(500).json({ error: "Error al agregar el producto al carrito" });
-  }
-});
-
-// /api/carts/:cid
 router.get("/:cid", async (req, res) => {
+  const id = parseInt(req.params.cid); // Parseamos a entero
+  const cart = await cartManager.getById(id);
+
+  if (!cart) {
+    res.status(404).send("No se encuentra un carrito de compras con el identificador proporcionado");
+    return;
+  } else if (cart.products.length === 0) {
+    res.status(201).send("Este carrito no contiene productos seleccionados");
+  } else {
+    res.status(201).send(cart.products);
+  }
+});
+
+router.get("/", async (req, res) => {
+  const carts = await cartManager.getAll();
+  res.send(carts);
+});
+
+router.post("/", async (req, res) => {
+  const { body } = req;
+  const cart = await cartManager.create(body);
+  res.status(201).send(cart);
+});
+
+router.post("/:cid/product/:pid", async (req, res) => {
   try {
-    const cartId = parseInt(req.params.cid);
+    const cid = parseInt(req.params.cid);
+    const pid = parseInt(req.params.pid);
+    const cantidad = 1; 
 
-    const cartData = await fs.readFile("./data/cart.json", "utf8");
+    const cart = await cartManager.getById(cid);
 
-    const cart = JSON.parse(cartData);
-
-    const targetCart = cart.find((item) => item.id === cartId);
-
-    if (!targetCart) {
-      res.status(404).json({ message: "Carrito no encontrado" });
+    if (!cart) {
+      res.status(404).send("No se encuentra un carrito de compras con el identificador proporcionado");
       return;
     }
 
-    res.status(200).json({ cart: targetCart });
-  } catch (error) {
-    res.status(500).json({ error: "Error al obtener los productos del carrito" });
+    const product = await productManager.getById(pid);
+
+    if (!product) {
+      res.status(404).send("El producto solicitado no se encuentra");
+      return;
+    } else if (product.stock === 0) {
+      res.status(201).send("No contamos con el stock necesario del producto requerido. Disculpe las molestias");
+      return;
+    }
+
+    const existe = await cartManager.existInCart(cart, pid);
+
+    if (existe === undefined) {
+      // Crear un nuevo producto en el carrito
+      const productInCart = await cartManager.createProduct(cart, pid, cantidad);
+
+      res.status(201).send(`El producto con ID ${productInCart.products[0].product} ha sido ingresado correctamente y su cantidad es ${productInCart.products[0].quantity}`);
+    } else {
+      if (existe.quantity === product.stock) {
+        res.status(201).send("No contamos con stock para el producto solicitado, disculpe las molestias");
+      } else {
+        // Actualizar la cantidad del producto existente en el carrito
+        const productInCart = await cartManager.updateProduct(cart, pid);
+
+        res.status(201).send(`El producto con ID ${pid} ha sido actualizado correctamente y su cantidad es ${productInCart}`);
+      }
+    }
+  } catch (e) {
+    res.status(500).send({
+      message: "Ha ocurrido un error en el servidor",
+      exception: e.stack,
+    });
   }
 });
+
 
 export default router;

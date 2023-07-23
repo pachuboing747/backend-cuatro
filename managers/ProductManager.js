@@ -7,142 +7,92 @@ const __dirname = path.dirname(__filename)
 
 
 class ProductManager {
+  #products = [];
 
   constructor(filename) {
     this.filename = filename;
-    this.filePath = path.join(__dirname, "../data", this.filename)
+    this.filepath = path.join(__dirname, "../data", this.filename);
   }
 
-  async addProduct(prod) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
+  #readFile = async () => {
+    const data = await fs.readFile(this.filepath, "utf-8");
 
-    if (!Array.isArray(items)) {
-      items = [];
-    }
-
-    const newItemId = items.length > 0 ? items[items.length - 1].id + 1 : 1;
-
-    const isDuplicate = items.some((item) => item.id === newItemId);
-    if (isDuplicate) {
-      throw new Error("El producto ya existe.");
-    }
-
-    items.push({
-      ...prod,
-      id: newItemId,
-    });
-
-    await fs.writeFile(this.filePath, JSON.stringify(items, null, 2));
-  }
-
-  async getProducts() {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
-
-    if (!Array.isArray(items)) {
-      items = [];
-    }
-
-    return items;
-  }
-
-  async getProductById(id) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
-
-    if (!Array.isArray(items)) {
-      items = [];
-    }
-
-    const product = items.find((p) => p.id === parseInt(id));
-    if (!product) {
-      throw new Error("Producto no encontrado.");
-    }
-
-    return product;
-  }
-
-  async updateProduct(id, updatedFields) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
-  
-    if (!Array.isArray(items)) {
-      items = [];
-    }
-  
-    const index = items.findIndex((p) => p.id === id);
-  
-    if (index !== -1) {
-      items[index] = {
-        ...items[index],
-        ...updatedFields
-      };
-  
-      await fs.writeFile(this.filePath, JSON.stringify(items, null, 2));
-      return true;
-    }
-  
-    return false;
-  }
-  
-
-  async deleteProduct(id) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
-
-    if (!Array.isArray(items)) {
-      items = [];
-    }
-
-    const index = items.findIndex((p) => p.id === id);
-
-    if (index === -1) {
-      throw new Error("Producto no encontrado.");
-    }
-
-    const updatedItems = items.filter((p) => p.id !== id);
-
-    await fs.writeFile(this.filePath, JSON.stringify(updatedItems, null, 2));
-  }
-}
-
-const manager = new ProductManager(path.join(__dirname, "productos.json"));
-
-
-async function test() {
-  try {
-    await manager.addProduct({
-      title: "Nike Zoom Mercurial Superfly 9 Academy MG",
-      description: "Cuenta con una unidad Zoom Air y con una NikeSkin flexible en la parte superior para brindar un toque excepcional, de modo que puedas dominar en los últimos y más importantes minutos de un partido.",
-      price: 49900,
-      thumbnail: "https://nikearprod.vtexassets.com/arquivos/ids/452821/DJ5625_001_A_PREM.jpg?v=638149287879500000",
-      code: "GW1022",
-      stock: 15,
-    });
-
-    const products = await manager.getProducts();
-    console.log(products);
-
-    const updated = await manager.updateProduct(1, {
-      title: "Nuevo nombre",
-      price: 29900,
-    });
-
-    if (updated) {
-      console.log("Producto actualizado exitosamente.");
+    if (data == "") {
+      this.#products = [
+        "El archivo se encuentra vacío, por favor, ingrese un producto",
+      ];
     } else {
-      console.log("Producto no encontrado.");
+      this.#products = JSON.parse(data);
+    }
+  };
+
+  #writeFile = async () => {
+    const data = JSON.stringify(this.#products, null, 2);
+    await fs.writeFile(this.filepath, data);
+  };
+
+  async getAll() {
+    await this.#readFile();
+
+    return this.#products;
+  }
+
+  async getById(id) {
+    await this.#readFile();
+
+    return this.#products.find((p) => p.id == id);
+  }
+
+  async create(product) {
+    await this.#readFile();
+
+    const id = (this.#products[this.#products.length - 1]?.id || 0) + 1;
+
+    const newProduct = {
+      id,
+      ...product,
+    };
+
+    if (
+      this.#products[0] ==
+      "El archivo se encuentra vacío, por favor, ingrese un producto"
+    ) {
+      this.#products.pop();
     }
 
-    const product = await manager.getProductById(1);
-    console.log(product);
+    this.#products.push(newProduct);
 
-    await manager.deleteProduct(5);
-    console.log("Producto eliminado exitosamente");
-  } catch (error) {
-    console.error(error.message);
+    await this.#writeFile();
+
+    return newProduct;
+  }
+
+  async save(id, producto) {
+    await this.#readFile();
+
+    const existing = await this.getById(id);
+
+    if (!existing) {
+      return;
+    }
+
+    const { title, description, stock, price, keywords } = producto;
+
+    existing.title = title;
+    existing.description = description;
+    existing.stock = stock;
+    existing.price = price;
+    existing.keywords = keywords;
+
+    await this.#writeFile();
+  }
+
+  async delete(id) {
+    await this.#readFile();
+
+    this.#products = this.#products.filter((p) => p.id != id);
+
+    await this.#writeFile();
   }
 }
-// test()
 export default ProductManager

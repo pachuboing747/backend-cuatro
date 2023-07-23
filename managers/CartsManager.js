@@ -1,113 +1,114 @@
-import fs from "fs/promises"
-import path from "path"
+// CartsManager.js
+
+import fs from "fs/promises";
+import path from "path";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename)
-
+const __dirname = path.dirname(__filename);
 
 class CartsManager {
+  #carts = [];
 
   constructor(filename) {
     this.filename = filename;
-    this.filePath = path.join(__dirname, "../data", this.filename)
+    this.filepath = path.join(__dirname, "../data", this.filename);
   }
 
-  async addProduct(prod) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
-
-    if (!Array.isArray(items)) {
-      items = [];
+  #readFile = async () => {
+    try {
+      const data = await fs.readFile(this.filepath, "utf-8");
+      if (data == "") {
+        this.#carts = [];
+      } else {
+        this.#carts = JSON.parse(data);
+      }
+    } catch (e) {
+      this.#carts = [];
     }
+  };
 
-    const newItemId = items.length > 0 ? items[items.length - 1].id + 1 : 1;
+  #writeFile = async () => {
+    const data = JSON.stringify(this.#carts, null, 2);
+    await fs.writeFile(this.filepath, data);
+  };
 
-    const isDuplicate = items.some((item) => item.id === newItemId);
-    if (isDuplicate) {
-      throw new Error("El producto ya existe.");
-    }
+  //Take data from carts id
+  async getById(id) {
+    await this.#readFile();
 
-    items.push({
-      ...prod,
-      id: newItemId,
-    });
-
-    await fs.writeFile(this.filePath, JSON.stringify(items, null, 2));
+    return this.#carts.find((c) => c.id == id);
   }
 
-  async getProducts() {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
+  //Create a new carts
+  async create(carts) {
+    await this.#readFile();
 
-    if (!Array.isArray(items)) {
-      items = [];
-    }
+    const id = (this.#carts[this.#carts.length - 1]?.id || 0) + 1;
 
-    return items;
+    const newcarts = {
+      id,
+      ...carts,
+      products: [],
+    };
+
+    this.#carts.push(newcarts);
+
+    await this.#writeFile();
+
+    return newcarts;
   }
 
-  async getProductById(id) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
-
-    if (!Array.isArray(items)) {
-      items = [];
-    }
-
-    const product = items.find((p) => p.id === parseInt(id));
-    if (!product) {
-      throw new Error("Producto no encontrado.");
-    }
-
-    return product;
+  async existInCart(cart, productId) {
+    return cart.products.find((p) => p.product == productId);
   }
 
-  async updateProduct(id, updatedFields) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
-  
-    if (!Array.isArray(items)) {
-      items = [];
-    }
-  
-    const index = items.findIndex((p) => p.id === id);
-  
-    if (index !== -1) {
-      items[index] = {
-        ...items[index],
-        ...updatedFields
-      };
-  
-      await fs.writeFile(this.filePath, JSON.stringify(items, null, 2));
-      return true;
-    }
-  
-    return false;
+  //Create a new entry in the products array for a determined cart
+  async createProduct(cart, productId, cantidad) {
+    await this.#readFile();
+
+    const newProduct = {
+      product: productId,
+      quantity: cantidad,
+    };
+
+   if (!cart.products){
+    cart.products = []
+   };
+   cart.products.push(newProduct)
+
+    await this.#writeFile();
+
+    return cart;
   }
-  
 
-  async deleteProduct(id) {
-    const products = await fs.readFile(this.filePath, "utf8");
-    let items = JSON.parse(products);
+  //Update the quantity of a product in a determined cart
+  async updateProduct(cart, productId) {
+    await this.#readFile();
 
-    if (!Array.isArray(items)) {
-      items = [];
+    const productInCart = cart.products.find((p) => p.product === productId);
+
+    if (!productInCart) {
+      return await this.createProduct(cart, productId +1)
+    }else {
+      const product = await productManager.getById(productId);
+
+    if (productInCart.quantity >= product.stock) {
+      return null; // Si la cantidad en el carrito ya es igual o mayor al stock, no se puede actualizar.
     }
+    productInCart.quantity++; // Incrementamos la cantidad del producto en el carrito.
 
-    const index = items.findIndex((p) => p.id === id);
+    await this.#writeFile();
 
-    if (index === -1) {
-      throw new Error("Producto no encontrado.");
-    }
+    return productInCart.quantity;
+  }
+  }
 
-    const updatedItems = items.filter((p) => p.id !== id);
+  async getAll() {
+    await this.#readFile();
 
-    await fs.writeFile(this.filePath, JSON.stringify(updatedItems, null, 2));
+    return this.#carts;
   }
 }
 
-const manager = new CartsManager(path.join(__dirname, "cart.json"));
-
-
-export default CartsManager
+export default CartsManager;
