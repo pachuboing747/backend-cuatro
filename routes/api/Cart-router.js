@@ -8,7 +8,7 @@ const productManager = new ProductManager("productos.json");
 const router = Router();
 
 router.get("/:cid", async (req, res) => {
-  const id = parseInt(req.params.cid); // Parseamos a entero
+  const id = parseInt(req.params.cid);
   const cart = await cartManager.getById(id);
 
   if (!cart) {
@@ -47,16 +47,16 @@ router.post('/:cid/product/:pid', async (req, res) => {
       const existingProductIndex = cart.products.findIndex((item) => item.product === pid);
 
       if (existingProductIndex !== -1) {
-        // If the product already exists in the cart, increase its quantity
+      
         cart.products[existingProductIndex].quantity++;
       } else {
-        // If the product doesn't exist, add it to the cart
+    
         const newProductId = cart.products.length + 1;
         const newProduct = { id: newProductId, product: pid, quantity: 1 };
         cart.products.push(newProduct);
       }
     } else {
-      // If the cart doesn't exist, create a new cart and add the product to it
+      
       const newProduct = { id: 1, product: pid, quantity: 1 };
       const newCart = { cid, products: [newProduct] };
       cartList.push(newCart);
