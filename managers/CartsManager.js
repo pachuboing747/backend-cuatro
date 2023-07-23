@@ -62,14 +62,11 @@ class CartsManager {
   async createProduct(carts, productId, cantidad) {
     await this.#readFile();
   
-    // Verificamos si el producto ya existe en el carrito
     const existingProductIndex = carts.products.findIndex((p) => p.product === productId);
   
     if (existingProductIndex !== -1) {
-      // Si el producto ya existe, incrementamos la cantidad
       carts.products[existingProductIndex].quantity += cantidad;
     } else {
-      // Si el producto no existe, lo agregamos al carrito
       const newProduct = {
         product: productId,
         quantity: cantidad,
@@ -80,7 +77,6 @@ class CartsManager {
   
     await this.#writeFile();
   
-    // Retornamos el carrito con el producto agregado o actualizado
     return carts;
   }
   
@@ -92,16 +88,15 @@ class CartsManager {
   const existingProduct = carts.products.find((p) => p.product === productId);
 
   if (!existingProduct) {
-    // Si el producto no existe en el carrito, retornamos null
+
     return null;
   }
 
-  // Incrementamos la cantidad del producto existente en 1
   existingProduct.quantity++;
 
   await this.#writeFile();
 
-  // Retornamos el producto con la cantidad actualizada
+
   return existingProduct;
 }
 
