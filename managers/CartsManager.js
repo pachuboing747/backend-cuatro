@@ -1,5 +1,3 @@
-// CartsManager.js
-
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -33,14 +31,12 @@ class CartsManager {
     await fs.writeFile(this.filepath, data);
   };
 
-  //Take data from carts id
   async getById(id) {
     await this.#readFile();
 
     return this.#carts.find((c) => c.id == id);
   }
 
-  //Create a new carts
   async create(carts) {
     await this.#readFile();
 
@@ -63,46 +59,54 @@ class CartsManager {
     return cart.products.find((p) => p.product == productId);
   }
 
-  //Create a new entry in the products array for a determined cart
-  async createProduct(cart, productId, cantidad) {
+  async createProduct(carts, productId, cantidad) {
     await this.#readFile();
-
-    const newProduct = {
-      product: productId,
-      quantity: cantidad,
-    };
-
-   if (!cart.products){
-    cart.products = []
-   };
-   cart.products.push(newProduct)
-
-    await this.#writeFile();
-
-    return cart;
-  }
-
-  //Update the quantity of a product in a determined cart
-  async updateProduct(cart, productId) {
-    await this.#readFile();
-
-    const productInCart = cart.products.find((p) => p.product === productId);
-
-    if (!productInCart) {
-      return await this.createProduct(cart, productId +1)
-    }else {
-      const product = await productManager.getById(productId);
-
-    if (productInCart.quantity >= product.stock) {
-      return null; // Si la cantidad en el carrito ya es igual o mayor al stock, no se puede actualizar.
+  
+    // Verificamos si el producto ya existe en el carrito
+    const existingProductIndex = carts.products.findIndex((p) => p.product === productId);
+  
+    if (existingProductIndex !== -1) {
+      // Si el producto ya existe, incrementamos la cantidad
+      carts.products[existingProductIndex].quantity += cantidad;
+    } else {
+      // Si el producto no existe, lo agregamos al carrito
+      const newProduct = {
+        product: productId,
+        quantity: cantidad,
+      };
+  
+      carts.products.push(newProduct);
     }
-    productInCart.quantity++; // Incrementamos la cantidad del producto en el carrito.
-
+  
     await this.#writeFile();
+  
+    // Retornamos el carrito con el producto agregado o actualizado
+    return carts;
+  }
+  
+  
+  
+  async updateProduct(carts, productId) {
+  await this.#readFile();
 
-    return productInCart.quantity;
+  const existingProduct = carts.products.find((p) => p.product === productId);
+
+  if (!existingProduct) {
+    // Si el producto no existe en el carrito, retornamos null
+    return null;
   }
-  }
+
+  // Incrementamos la cantidad del producto existente en 1
+  existingProduct.quantity++;
+
+  await this.#writeFile();
+
+  // Retornamos el producto con la cantidad actualizada
+  return existingProduct;
+}
+
+// ... (código posterior)
+
 
   async getAll() {
     await this.#readFile();

@@ -2,6 +2,7 @@ import { Router } from "express";
 import CartsManager from "../../managers/CartsManager.js";
 import ProductManager from "../../managers/ProductManager.js";
 
+
 const cartManager = new CartsManager("cart.json");
 const productManager = new ProductManager("productos.json");
 const router = Router();
@@ -46,11 +47,11 @@ router.post("/:cid/product/:pid", async (req, res) => {
 
     const product = await productManager.getById(pid);
 
-    if (!product) {
-      res.status(404).send("El producto solicitado no se encuentra");
+    if (product) {
+      res.send("producto encontrado");
       return;
-    } else if (product.stock === 0) {
-      res.status(201).send("No contamos con el stock necesario del producto requerido. Disculpe las molestias");
+    } else if (product.cantidad === 0) {
+      res.status(201).send("error");
       return;
     }
 
